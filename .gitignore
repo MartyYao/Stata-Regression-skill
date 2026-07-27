@@ -1,0 +1,17 @@
+# Data
+data/raw/
+data/derived/
+
+# Output
+output/tables/
+output/figures/
+logs/
+
+# Stata
+*.dta
+*.log
+*.smcl
+
+# Python
+__pycache__/
+*.pyc
