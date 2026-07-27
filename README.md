@@ -157,6 +157,33 @@ stata-regression/
 
 ---
 
+## 致谢
+
+本技能参考了以下开源项目，在此表示感谢：
+
+- **[maxwell2732/codex-stata-for-economists](https://github.com/maxwell2732/codex-stata-for-economists)**（199★）— Do-file 编码规范（header/boilerplate/logging）、图形色彩标准（RGB 色号/线型）、计量最佳实践 10 条。本技能的 `do-file-standards.md` 和 `econometric-checklist.md` 以此为基础裁剪和适配。
+
+- **[dylantmoore/stata-skill](https://github.com/dylantmoore/stata-skill)**（272★）— estout/esttab 出版级表格模板（AER Style）、输出格式（CSV/LaTeX/RTF）。本技能的 `table-standards.md` 中的 LaTeX 三线表模板和 esttab 选项参考自此项目。
+
+- **[YoungFujun/stata-graphics-skill](https://github.com/YoungFujun/stata-graphics-skill)**（22★）— 渐进式路由表设计理念、出图模板分类、图形坑点清单。本技能的 `SKILL.md` 路由结构和 `graph-templates.md` 的模板分类借鉴了此项目的三层架构。
+
+### 本技能的改进
+
+相比于上述参考项目，本技能做了以下整合与增强：
+
+| 改进 | 说明 |
+|------|------|
+| **论文全流程闭环** | 从 do 文件模板 → 回归 → 出图 → 出表 → 质量检查，单一技能覆盖完整实证循环 |
+| **独立于特定 Agent** | 同时提供 AGENTS.md（Codex）、CLAUDE.md（Claude Code）、SKILL.md（通用），无需插件系统 |
+| **中文优先** | 所有注释、模板、说明以中文撰写，降低中国经管研究者使用门槛 |
+| **附赠转换工具** | `esttab2pipe.py` 将 esttab CSV 一键转为 markdown pipe table，填补了 CSV → 可读表格的缺失环节 |
+| **CSMAR 数据陷阱** | 新增 CSMAR 数据特有的 6 条陷阱（变量类型不一致、Accper 日期解析等），来自实战踩坑记录 |
+| **DID 多期陷阱** | 补充 staggered DID 的三个具体坑（对照组误删、基期选择、TWFE forbidden comparisons） |
+| **多轮审查修复** | 经 Kimi Code K3 和 Claude Code 两轮审查共修复 20+ 个问题（负 t 值正则、coeflabels 通配覆盖、predictnl 伪代码等） |
+| **可复现 CSS** | 附带 Obsidian CSS 片段，pipe table 预览时可渲染为专业三线表 |
+
+---
+
 ## 技术规范速览
 
 | 规范 | 标准 |
