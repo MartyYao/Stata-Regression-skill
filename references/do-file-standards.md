@@ -128,7 +128,78 @@ log close
 - 不保留注释掉的死代码
 - 没有 unexplained magic number → 用 `local` 命名并加注释
 
-## 10. 完整模板框架
+## 10. 推荐项目目录结构
+
+### 标准结构
+
+```
+项目工作文件夹/
+├── master_analysis.do              ← 唯一主入口 do 文件
+├── working_data.dta                 ← 当前分析用数据（唯一主数据文件）
+│
+├── dofiles/                         ← 所有 do 文件，按阶段分目录
+│   ├── 01_clean/                    ← 原始数据清洗
+│   ├── 02_construct/                ← 变量构造、样本筛选
+│   ├── 03_analysis/                 ← 主回归、机制、异质性
+│   └── 04_robustness/               ← 稳健性检验、IV、安慰剂
+│
+├── logs/                            ← 所有 .log 文件，结构与 dofiles/ 镜像
+│   ├── 01_clean/
+│   ├── 02_construct/
+│   ├── 03_analysis/
+│   └── 04_robustness/
+│
+├── output/
+│   ├── tables/                      ← 所有 CSV + TeX（回归表、描述统计等）
+│   └── figures/                     ← 所有 PDF + PNG（事件研究图、系数图等）
+│
+├── archive/                         ← 已废弃的旧版本、旧数据、旧过程文件
+│   ├── dofiles/                     ← 旧版 do 文件
+│   ├── logs/                        ← 同步废弃的 log
+│   └── datasets/                    ← 旧版 dta 文件
+│
+└── docs/                            ← .md 文档（变量说明、数据构造记录等）
+```
+
+### 文件生命周期
+
+```
+新建 do 文件 → dofiles/03_analysis/ 下创建
+     │
+首次运行 → logs/ 下生成对应 .log
+     │
+产出表格 → output/tables/ 下生成 .csv + .tex
+     │
+产出图形 → output/figures/ 下生成 .pdf + .png
+     │
+废弃/重写 → 旧 do 文件和对应 log 移入 archive/
+     │
+论文完稿 → 最终版 output/ 和 dofiles/ 保持整洁即可
+```
+
+### 命名约定
+
+| 文件类型 | 命名规范 | 示例 |
+|----------|---------|------|
+| Do 文件 | `数字_描述.do` | `03_analysis_main_regression.do` |
+| Log 文件 | 与 do 文件同名 | `03_analysis_main_regression.log` |
+| 表格 CSV | `表号_描述.csv` | `table2_main_regression.csv` |
+| 表格 TeX | 与 CSV 同名 | `table2_main_regression.tex` |
+| 图形 PDF | `类型_描述.pdf` | `fig_event_study.pdf` |
+| 图形 PNG | 与 PDF 同名 | `fig_event_study.png` |
+| 数据文件 | `描述.dta` | `working_data.dta` |
+
+### 禁止模式
+
+| 禁止 | 理由 |
+|------|------|
+| do 文件、log、CSV 混在根目录 | 不可维护，无法快速定位 |
+| 大量废弃版本（`_v2` `_v3` `_final3`）留在根目录 | 不知道当前用的是哪个版本 |
+| log 文件和 do 文件同名但放在不同路径 | 无法对应检查 |
+| 老旧数据覆盖当前数据 | 无法回退 |
+| 多个版本的 dta 文件散落各处（`data_v1.dta`、`data_v2.dta`） | 不知道哪个是当前版 |
+
+## 11. 完整模板框架
 
 ```stata
 *-----------------------------------------------------------------------------
