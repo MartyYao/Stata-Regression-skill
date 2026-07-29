@@ -203,7 +203,7 @@ stata-regression/
 
 | 版本 | 日期 | 更新内容 |
 |------|------|---------|
-| **v0.3.0** | 2026-07-28 | 输出管线完全重写：废弃 pandoc，改为 CSV→Python→HTML+docx。重写 esttab2html.py，新增 --note/--title/--output-dir，空白单元格自填 —。经 K3 + Claude Code 四轮审查 |
+| **v0.2.1** | 2026-07-28 | 输出管线完全重写：废弃 pandoc，改为 CSV→Python→HTML+docx。重写 esttab2html.py，新增 --note/--title/--output-dir，空白单元格自填 —。经 K3 + Claude Code 四轮审查 |
 | **v0.2.0** | 2026-07-28 | 表格输出管线重构：用 pandoc（esttab→.tex→.html+.docx）取代 CSV→pipe table 路线。新增 esttab2html.py，废弃 esttab2pipe.py |
 | **v0.1.1** | 2026-07-28 | 新增「推荐项目目录结构」规范（do 文件/log/表格/图形/旧文件的分类存放规则、命名约定、禁止模式） |
 | **v0.1.0** | 2026-07-27 | 初始发布。Do 文件编码规范、9 类出图模板、esttab 表格输出标准、10 条计量检查、24 条陷阱速查、esttab2pipe.py 转换工具 |
