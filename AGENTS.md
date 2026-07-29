@@ -16,7 +16,8 @@ references/graph-standards.md      → Graph style (colors, line types, export)
 references/graph-templates.md      → Graph code templates (event study, coefplot, etc.)
 references/econometric-checklist.md → 10 quality checks per regression
 references/stata-pitfalls.md       → 24 common Stata mistakes
-scripts/esttab2pipe.py             → CSV → markdown pipe table converter
+scripts/esttab2html.py             → CSV → HTML converter
+scripts/merge_rtf.py                → RTF merger for appendix
 ```
 
 ## Non-Negotiable Rules
