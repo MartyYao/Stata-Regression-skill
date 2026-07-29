@@ -21,7 +21,7 @@
 |------|------|
 | 标准化 header | 每条 do 文件按统一模板：File/Project/Inputs/Outputs/Log |
 | 安全样板代码 | `version`、`set more off`、`set varabbrev off`、logging、seed |
-| esttab 输出纪律 | CSV 加 `plain` 选项，同时出 LaTeX 备选 |
+| esttab 输出纪律 | 双输出：CSV（plain → esttab2html.py → HTML）+ RTF（esttab 原生 → Word），merge_rtf.py 合并为附录 |
 | 禁止模式清单 | `cd` 绝对路径、循环内 `set more off`、`varabbrev on` 等 |
 | 完整模板框架 | 三列逐步回归的 do 文件可直接改变量名使用 |
 
@@ -52,12 +52,10 @@
 
 | 能力 | 说明 |
 |------|------|
-| esttab CSV 输出 | 系数 4 位 + t 值 4 位 + 星号，`plain` 选项 |
-| esttab LaTeX 输出 | booktabs 三线表，含完整 prehead/postfoot |
-| 多列分组 | Panel A/B 分组，`\cmidrule` |
+| esttab 双输出 | CSV（plain → HTML）+ RTF（esttab 原生 → Word），merge_rtf.py 合并为附录 |
+| 多列分组 | Panel A/B 分组，mgroups |
 | 描述统计 | tabstat → 3 位小数 |
 | 相关系数矩阵 | pwcorr + 显著性标记 |
-| CSV → Pipe Table | `scripts/esttab2pipe.py` 一键转换 |
 
 ### 5. 计量质量检查（10 条）
 
@@ -112,8 +110,8 @@
 
 ```
 Stata do 文件
-  ├─ esttab → .csv (plain)  → scripts/esttab2pipe.py → markdown pipe table
-  ├─ esttab → .tex (booktabs) → 备选 LaTeX 投稿
+  ├─ esttab → .csv (plain) → esttab2html.py → .html（Obsidian 阅读视图）
+  ├─ esttab → .rtf → merge_rtf.py → 附录-实证表格.rtf（合并投稿）
   └─ graph export → .pdf + .png
 ```
 
@@ -129,13 +127,14 @@ stata-regression/
 ├── SKILL.md                           ← 主路由表 + 执行协议
 ├── references/
 │   ├── do-file-standards.md           ← Do 文件编码规范 + 完整模板
-│   ├── table-standards.md             ← esttab 输出标准 + pipe table 规范
+│   ├── table-standards.md             ← esttab 输出标准（CSV + RTF）
 │   ├── graph-standards.md             ← 图形质量标准（RGB 色号/线型/导出）
 │   ├── graph-templates.md             ← 9 类出图模板
 │   ├── econometric-checklist.md       ← 10 条计量质量检查
 │   └── stata-pitfalls.md              ← 24 条高频陷阱速查
 └── scripts/
-    └── esttab2pipe.py                 ← esttab CSV → markdown pipe table
+    ├── esttab2html.py                 ← esttab CSV → HTML
+    └── merge_rtf.py                   ← 合并 .rtf 为附录
 ```
 
 ---
@@ -176,10 +175,10 @@ stata-regression/
 | **论文全流程闭环** | 从 do 文件模板 → 回归 → 出图 → 出表 → 质量检查，单一技能覆盖完整实证循环 |
 | **独立于特定 Agent** | 同时提供 AGENTS.md（Codex）、CLAUDE.md（Claude Code）、SKILL.md（通用），无需插件系统 |
 | **中文优先** | 所有注释、模板、说明以中文撰写，降低中国经管研究者使用门槛 |
-| **附赠转换工具** | `esttab2pipe.py` 将 esttab CSV 一键转为 markdown pipe table，填补了 CSV → 可读表格的缺失环节 |
+| **附赠转换工具** | `esttab2html.py` 将 esttab CSV 一键转为 HTML（Obsidian 阅读视图直接预览），`merge_rtf.py` 合并所有 .rtf 为投稿附录 |
 | **CSMAR 数据陷阱** | 新增 CSMAR 数据特有的 6 条陷阱（变量类型不一致、Accper 日期解析等），来自实战踩坑记录 |
 | **DID 多期陷阱** | 补充 staggered DID 的三个具体坑（对照组误删、基期选择、TWFE forbidden comparisons） |
-| **多轮审查修复** | 经 Kimi Code K3 和 Claude Code 两轮审查共修复 20+ 个问题（负 t 值正则、coeflabels 通配覆盖、predictnl 伪代码等） |
+| **多重审核** | 经 Kimi Code K3 和 Claude Code 四轮审查共修复 30+ 个问题（P0/P1 全部清零） |
 | **可复现 CSS** | 附带 Obsidian CSS 片段，pipe table 预览时可渲染为专业三线表 |
 
 ---
@@ -189,7 +188,7 @@ stata-regression/
 | 规范 | 标准 |
 |------|------|
 | 系数小数位 | 4 位 |
-| 括号内 | t 值（非标准误） |
+| 括号内 | 标准误（非 t 值） |
 | 控制变量 | 逐行列全部系数，不可用 ✓ |
 | 显著性标记 | * p<0.10, ** p<0.05, *** p<0.01 |
 | 焦点系列颜色 | RGB 49 145 255 (`#3191FF`) |
