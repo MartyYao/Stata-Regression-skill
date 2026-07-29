@@ -1,16 +1,16 @@
 # Table Standards — 表格输出规范
 
-## 1. 回归表：esttab → .tex → pandoc
+## 1. 回归表：esttab → .csv → HTML + docx
 
 ### 输出管线
 
 ```
-esttab → .tex (booktabs) → esttab2html.py → .html + .docx
-                              └─ pandoc 自动转换
+esttab → .csv (plain) → esttab2html.py → .html + .docx
+                          └─ Python 直接生成，不依赖 pandoc
 ```
 
-- `.html` → Obsidian 预览模式直接插入（三线表 CSS 渲染）
-- `.docx` → Word 打开，CSSCI 投稿用（可再微调字体/边框）
+- `.html` → Obsidian 预览模式直接插入（inline 三线表样式）
+- `.docx` → Word 打开，CSSCI 投稿用（宋体 10pt 三线表，可再微调）
 
 ### esttab 命令
 
@@ -18,38 +18,39 @@ esttab → .tex (booktabs) → esttab2html.py → .html + .docx
 * 先添加 FE/Controls 标记（必须在 esttab 前）
 eststo m1: reghdfe over_v1 post, absorb(Stkcd year) vce(cluster province)
 estadd local Controls "No"
-estadd local FirmFE "Yes"
-estadd local YearFE "Yes"
+estadd local FirmFE "是"
+estadd local YearFE "是"
 
 eststo m2: reghdfe over_v1 post $controls, absorb(Stkcd year) vce(cluster province)
 estadd local Controls "Yes"
-estadd local FirmFE "Yes"
-estadd local YearFE "Yes"
+estadd local FirmFE "是"
+estadd local YearFE "是"
 
 eststo m3: reghdfe over_v1 post $controls $prov_C, absorb(Stkcd year) vce(cluster province)
 estadd local Controls "Yes"
-estadd local FirmFE "Yes"
-estadd local YearFE "Yes"
+estadd local FirmFE "是"
+estadd local YearFE "是"
 
-* 输出 LaTeX（booktabs 三线表）
-esttab m1 m2 m3 using "output/tables/main.tex", replace ///
-    b(4) se(4) ///
+* 可选：DV 均值与聚类层级（需先计算）
+* quietly summarize over_v1 if e(sample)
+* estadd local MeanDV = string(r(mean), "%9.4f")
+* estadd local Cluster "province"
+
+* 输出 CSV（plain，供 esttab2html.py 解析）
+esttab m1 m2 m3 using "output/tables/main.csv", replace ///
+    b(4) se(4) plain ///
     star(* 0.10 ** 0.05 *** 0.01) ///
-    booktabs ///
     label compress ///
     mtitles("(1)" "(2)" "(3)") ///
     stats(Controls FirmFE YearFE N r2_a, ///
         fmt(%3s %3s %3s %9.0f %9.4f) ///
-        labels("Controls" "Firm FE" "Year FE" "N" "Adj. R&sup2")) ///
-    substitute(\_ _) ///
-    fragment
+        labels("Controls" "企业固定效应" "年份固定效应" "N" "Adj. R$^2$"))
 ```
 
 选项含义：
 - `b(4) se(4)` → 系数和标准误保留 4 位小数
-- `booktabs` → 使用 LaTeX booktabs 三线表（`\toprule`/`\midrule`/`\bottomrule`）
+- `plain` → CSV 不加 `=""` 包裹（esttab2html.py 解析前提，缺了会报错）
 - `star(* 0.10 ** 0.05 *** 0.01)` → 显著性标记
-- `booktabs fragment` → 不包含 `\begin{table}` 环境，供 pandoc 直接处理
 - `stats(...)` → 底部统计行
 - `estadd local` → 在 esttab 前逐列标记 Controls/FE 状态
 
@@ -57,17 +58,20 @@ esttab m1 m2 m3 using "output/tables/main.tex", replace ///
 
 1. **全系数展示**：不得使用 `keep()` 或 `drop()` 过滤控制变量，所有系数逐行列示
 2. **_cons 保留**：禁止 `drop(_cons)`
-3. **双格式输出**：.tex 必须用 `booktabs fragment`，同一 `.tex` 生成 `.html` + `.docx`
+3. **双格式输出**：.csv 必须用 `plain`，同一 `.csv` 生成 `.html` + `.docx`
 4. **星号规范**：`* p<0.10, ** p<0.05, *** p<0.01`
 
 ### 调用转换脚本
 
 ```bash
 # 基础用法
-python scripts/esttab2html.py output/tables/main.tex
+python scripts/esttab2html.py output/tables/main.csv
 
 # 带标题
-python scripts/esttab2html.py output/tables/main.tex --title "Table 2: 基准回归 V1"
+python scripts/esttab2html.py output/tables/main.csv --title "Table 2: 基准回归 V1"
+
+# 自定义表尾注脚（默认：括号内为标准误；* p<0.10, ** p<0.05, *** p<0.01）
+python scripts/esttab2html.py output/tables/main.csv --note "省份层面聚类稳健标准误"
 ```
 
 输出：
@@ -80,18 +84,26 @@ output/tables/main.docx   ← Word 投稿用
 
 ## 2. 多列分组（Panel A/B 或多模型对比）
 
+机制表、异质性子表用 `mgroups` 分组。**6 个模型均需 `estadd local`，不可遗漏：**
+
 ```stata
-esttab m1_v1 m2_v1 m3_v1 m1_v2 m2_v2 m3_v2 using "output/tables/main.tex", replace ///
-    b(4) se(4) ///
+* 先逐列添加 FE/Controls 标记（必须在 esttab 前）
+eststo m1_v1: reghdfe over_v1 post, absorb(Stkcd year) vce(cluster province)
+estadd local Controls "No"; estadd local FirmFE "是"; estadd local YearFE "是"
+eststo m2_v1: reghdfe over_v1 post $controls, absorb(Stkcd year) vce(cluster province)
+estadd local Controls "Yes"; estadd local FirmFE "是"; estadd local YearFE "是"
+eststo m3_v1: reghdfe over_v1 post $controls $prov_C, absorb(Stkcd year) vce(cluster province)
+estadd local Controls "Yes"; estadd local FirmFE "是"; estadd local YearFE "是"
+* （m1_v2 ~ m3_v2 同理，每列均需 estadd local）
+
+esttab m1_v1 m2_v1 m3_v1 m1_v2 m2_v2 m3_v2 using "output/tables/main.csv", replace ///
+    b(4) se(4) plain ///
     star(* 0.10 ** 0.05 *** 0.01) ///
-    booktabs fragment ///
     label compress ///
-    mgroups("Panel A: V1" "Panel B: V2", pattern(1 0 0 1 0 0) ///
-            prefix(\multicolumn{@span}{c}{) suffix(}) span ///
-            erepeat(\cmidrule(lr){@span})) ///
+    mgroups("Panel A: V1" "Panel B: V2", pattern(1 0 0 1 0 0) span) ///
     stats(Controls FirmFE YearFE N r2_a, ///
-        fmt(%3s %3s %3s %9.0f %9.4f)) ///
-    substitute(\_ _)
+        fmt(%3s %3s %3s %9.0f %9.4f) ///
+        labels("Controls" "企业固定效应" "年份固定效应" "N" "Adj. R$^2$"))
 ```
 
 ---
@@ -102,11 +114,11 @@ esttab m1_v1 m2_v1 m3_v1 m1_v2 m2_v2 m3_v2 using "output/tables/main.tex", repla
 estpost tabstat over_v1 over_v2 size lev age ..., ///
     statistics(mean sd p50 min max N) columns(statistics)
 
-esttab . using "output/tables/table1_descriptives.tex", replace ///
+esttab . using "output/tables/table1_descriptives.csv", replace plain ///
     cells("mean(fmt(3)) sd(fmt(3)) p50(fmt(3)) min(fmt(3)) max(fmt(3)) count(fmt(0))") ///
-    nomtitle label booktabs fragment
+    nomtitle label
 
-python scripts/esttab2html.py output/tables/table1_descriptives.tex --title "Table 1: 描述统计"
+python scripts/esttab2html.py output/tables/table1_descriptives.csv --title "Table 1: 描述统计"
 ```
 
 描述统计统一保留 **3 位小数**。
@@ -123,10 +135,14 @@ pwcorr over_v1 over_v2 size lev age ..., obs sig star(0.05)
 - `sig` → 显示 p 值
 - `star(0.05)` → 在 5% 水平上标记显著性
 
+```stata
+* 输出到 log 并标注
+log close 后，pwcorr 结果在 .log 文件中，无需额外导出表格。
+```
+
 ---
 
 ## 5. 前置条件
 
-- **pandoc**：macOS 安装 `brew install pandoc`
-- **Stata**：`booktabs` 选项需要 estout 包（`ssc install estout`）
-- **LaTeX booktabs 包**：pandoc 内置支持，无需额外安装
+- **python-docx**：`pip install python-docx`（esttab2html.py 生成 .docx 用，不依赖 pandoc）
+- **Stata**：esttab 需要 estout 包（`ssc install estout`）

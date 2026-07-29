@@ -131,7 +131,7 @@ restore
 * （实际运行时循环 500-1000 次，收集系数放入 placebo_coefs.dta）
 
 * 画图
-use "output/data/placebo_coefs.dta", clear
+use "archive/datasets/placebo_coefs.dta", clear
 
 * 从回归结果获取真实系数做参考线
 local true_coef = _b[post]

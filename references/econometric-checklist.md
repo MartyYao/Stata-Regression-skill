@@ -57,16 +57,9 @@ display "After restriction [理由]: " _N
 ### 4. 工具变量：报告第一段 F 值和弱 IV 检验
 
 ```stata
-* 第一段回归
-eststo first: reghdfe post $instrument $exogenous, absorb(Stkcd year) vce(cluster province)
-
-* 报告 F 值
-display "First-stage F: "
+* ivreg2 需要 ssc install ivreg2
+ivreg2 over_v1 ($instrument = $exogenous), robust
 estat firststage
-
-* 弱 IV 检验（Olea-Pflueger）
-* 需要先安装：ssc install weakivtest
-weakivtest
 ```
 
 - F < 10 是红旗
@@ -114,19 +107,18 @@ foreach var in `vars' {
 
 ### 8. 输出格式：回归表每列报告
 
-每条 do 文件的回归表输出必须包含（不可省略）：
+每条 do 文件的回归表输出最小必须包含：
 
 - [ ] N（样本量）
 - [ ] Adj. R²（或 within R²）
-- [ ] DV 均值（预先用 `estadd ysumm` 或 `estadd local mean = ...`）
-- [ ] 聚类层级和聚类数
-- [ ] 固定效应（哪些 FE、哪些不包含）
+- [ ] FE 标注（企业/年份固定效应）
+- [ ] 聚类层级（在表注中说明）
 - [ ] 控制变量集（全部系数，不可用 ✓）
 
 `esttab` 统计行：
 
 ```stata
-stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R²"))
+stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R$^2$"))
 ```
 
 ---
@@ -147,7 +139,7 @@ stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R²"))
 ### 10. Log 验证：每个数值声明必须可追溯
 
 - 所有输出的系数、SE、p 值、N 必须有 log 源
-- 检查 `esttab` 输出的 CSV 文件存在且非空
+- 检查 `esttab` 输出的 .csv 存在且通过 log 验证
 - 检查 `.log` 文件尾部确认 `log close` 且无 `r(###)` 错误
 
 ```bash

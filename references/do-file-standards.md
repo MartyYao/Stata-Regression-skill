@@ -10,8 +10,8 @@
 * Project: [论文项目名]
 * Author: [自动]
 * Purpose: [本文件做什么——DID 主回归 V1，机制检验]
-* Inputs: data/derived/analysis_sample.dta
-* Outputs: output/tables/main_regression.tex
+* Inputs: working_data.dta
+* Outputs: output/tables/main_regression.csv
 *          output/tables/main_regression.html
 *          output/tables/main_regression.docx
 *          output/figures/event_study.pdf
@@ -54,6 +54,8 @@ set seed 20260726
 | 变量名 | `snake_case`，描述性（`post`, `ln_fiscal_ratio`, `treat_score1`） |
 | Local macro | `local varlist age educ ...` |
 | 文件命名 | 镜像阶段：`01_clean.do`, `02_construct.do`, `03_analysis.do` |
+| 全局宏 | `$controls`, `$prov_C` | 跨 do 文件引用的变量列表用全局宏，在 master_analysis.do 顶部定义 |
+| 本地宏 | `` `varlist' `` | 单 do 文件内的临时变量用本地宏 |
 
 ## 5. 回归输出纪律
 
@@ -64,21 +66,8 @@ reghdfe over_v1 post $controls, absorb(Stkcd year) vce(cluster province)
 estimates store m1
 ```
 
-保存 LaTeX（→ pandoc 转换为 HTML + docx）：
-
-```stata
-* 回归表 - LaTeX（booktabs 三线表）
-esttab m1 m2 m3 using "output/tables/main_regression.tex", replace ///
-    b(4) se(4) booktabs fragment ///
-    star(* 0.10 ** 0.05 *** 0.01) ///
-    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R&sup2")) ///
-    nomtitle label compress
-
-* 转换为 HTML + docx
-* shell python scripts/esttab2html.py output/tables/main_regression.tex
-```
-
-**`esttab` 的 `booktabs fragment` 选项**：生成不含 `\begin{table}` 环境的纯 LaTeX 表格代码，供 pandoc 直接处理。
+回归表输出格式见第 11 节完整模板。
+关键参数：`se(4) plain`。
 
 ## 6. 每条 do 文件必须伴随 log
 
@@ -132,6 +121,7 @@ log close
 项目工作文件夹/
 ├── master_analysis.do              ← 唯一主入口 do 文件
 ├── working_data.dta                 ← 当前分析用数据（唯一主数据文件）
+│                                      * data/derived/ 在 archive/datasets/ 中
 │
 ├── dofiles/                         ← 所有 do 文件，按阶段分目录
 │   ├── 01_clean/                    ← 原始数据清洗
@@ -146,7 +136,7 @@ log close
 │   └── 04_robustness/
 │
 ├── output/
-│   ├── tables/                      ← 所有 CSV + TeX（回归表、描述统计等）
+│   ├── tables/                      ← 所有 CSV + HTML + docx（回归表、描述统计等）
 │   └── figures/                     ← 所有 PDF + PNG（事件研究图、系数图等）
 │
 ├── archive/                         ← 已废弃的旧版本、旧数据、旧过程文件
@@ -164,7 +154,7 @@ log close
      │
 首次运行 → logs/ 下生成对应 .log
      │
-产出表格 → output/tables/ 下生成 .csv + .tex
+产出表格 → output/tables/ 下生成 .csv → .html + .docx
      │
 产出图形 → output/figures/ 下生成 .pdf + .png
      │
@@ -180,7 +170,7 @@ log close
 | Do 文件 | `数字_描述.do` | `03_analysis_main_regression.do` |
 | Log 文件 | 与 do 文件同名 | `03_analysis_main_regression.log` |
 | 表格 CSV | `表号_描述.csv` | `table2_main_regression.csv` |
-| 表格 TeX | 与 CSV 同名 | `table2_main_regression.tex` |
+| 表格 HTML/docx | 与 CSV 同名 | `table2_main_regression.html/.docx` |
 | 图形 PDF | `类型_描述.pdf` | `fig_event_study.pdf` |
 | 图形 PNG | 与 PDF 同名 | `fig_event_study.png` |
 | 数据文件 | `描述.dta` | `working_data.dta` |
@@ -203,8 +193,8 @@ log close
 * Project: [项目名]
 * Author: [自动]
 * Purpose: DID 主回归 V1 + 平行趋势检验
-* Inputs: data/derived/analysis_sample.dta
-* Outputs: output/tables/main_regression.tex
+* Inputs: working_data.dta
+* Outputs: output/tables/main_regression.csv
 *          output/tables/main_regression.html
 *          output/tables/main_regression.docx
 *          output/figures/event_study.pdf
@@ -222,12 +212,14 @@ log using "logs/03_analysis_05_main_regression.log", replace text
 set seed 20260726
 
 *--- 0. 项目配置 ------------------------------------------------------------
-local analysis_data "data/derived/analysis_sample.dta"
+local analysis_data "working_data.dta"
 local outcome "over_v1"
 local treat "post"
 local controls "size lev age ..."
 local fe "Stkcd year"
 local cluster "province"
+local prov_C "gdp_growth pop_density fiscal_ratio industry_structure"
+* 替换为你的省级控制变量
 
 *--- 1. 载入 + 验证样本 ----------------------------------------------------
 use "`analysis_data'", clear
@@ -249,24 +241,35 @@ eststo clear
 
 * Column 1: treat only
 eststo m1: reghdfe `outcome' `treat', absorb(`fe') vce(cluster `cluster')
+estadd local Controls "No"
+estadd local FirmFE "是"
+estadd local YearFE "是"
 
 * Column 2: + 企业控制变量
 eststo m2: reghdfe `outcome' `treat' `controls', absorb(`fe') vce(cluster `cluster')
+estadd local Controls "Yes"
+estadd local FirmFE "是"
+estadd local YearFE "是"
 
 * Column 3: + 省级控制变量
 eststo m3: reghdfe `outcome' `treat' `controls' `prov_C', ///
     absorb(`fe') vce(cluster `cluster')
+estadd local Controls "Yes"
+estadd local FirmFE "是"
+estadd local YearFE "是"
 
 *--- 3. 输出表格 ------------------------------------------------------------
-* LaTeX（booktabs 三线表 → pandoc 转 HTML + docx）
-esttab m1 m2 m3 using "output/tables/main_regression.tex", replace ///
-    b(4) se(4) booktabs fragment ///
+* CSV（plain → esttab2html.py 转 HTML + docx）
+esttab m1 m2 m3 using "output/tables/main_regression.csv", replace ///
+    b(4) se(4) plain ///
     star(* 0.10 ** 0.05 *** 0.01) ///
-    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R&sup2")) ///
-    nomtitle label compress
+    stats(Controls FirmFE YearFE N r2_a, ///
+        fmt(%3s %3s %3s %9.0f %9.4f) ///
+        labels("Controls" "企业固定效应" "年份固定效应" "N" "Adj. R$^2$")) ///
+    mtitles("(1)" "(2)" "(3)") label compress
 
 * 转换为 HTML + docx（需要在 shell 中运行）
-* shell python scripts/esttab2html.py output/tables/main_regression.tex
+* shell python scripts/esttab2html.py output/tables/main_regression.csv
 
 log close
 ```

@@ -17,8 +17,8 @@
 |---|------|------|------|
 | 7 | 因子变量不接受负值 | `i.rel_time` → r(452) | `gen rel_pos = rel_time + 5`, `ib4.rel_pos` |
 | 8 | `esttab keep()` 不匹配因子名 | `keep(*.rel_time)` 找不到 | 改 `keep(*.rel_time_pos)` |
-| 9 | esttab 首次输出 CSV | file not found | 忽略（首次创建的正常提示） |
-| 10 | `esttab ... , plain` 不加 `plain` | CSV 被 `=""` 包裹 | 必须加 `plain` 选项 |
+| 9 | `esttab` 首次输出 .csv 报 `file not found` | 无害 | 忽略，首次创建文件时的警告 |
+| 10 | `esttab ... , plain` 不加 `plain` | 输出被 `=""` 包裹 | 检查 .csv：若含 `=""` 则需重新输出加 `plain` |
 
 ## 工作流陷阱
 

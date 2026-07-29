@@ -31,21 +31,21 @@ description: Use when writing Stata do-files for empirical papers.
 
 **Step 4 — 检查**：对照 econometric-checklist.md，确认回归参数无误
 
-**Step 5 — 输出**：运行 do 文件，用 `esttab2html.py` 将 .tex 转为 .html + .docx
+**Step 5 — 输出**：运行 do 文件，用 `esttab2html.py` 将 .csv 转为 .html + .docx
 
 ## 回归表强制规范（CSSCI 期刊标准）
 
 以下规范为硬性要求，违反即退回：
 
 1. **常数项**：必须包含 `_cons` 行，禁止 `drop(_cons)` 或 `keep()` 中省略
-2. **全系数展示**：所有变量的系数和 t 值必须列示，不得用省略号替代。回归表内不允许出现 `...` 或空白省略控制变量
+2. **全系数展示**：所有变量的系数和标准误必须列示，不得用省略号替代。回归表内不允许出现 `...` 或空白省略控制变量
 3. **固定效应**：标注为 `企业固定效应` 和 `年份固定效应`，不可简写为 `FE`
 4. **Adj R²**：必须内嵌于表格最后两行之一，与 N 相邻
 5. **聚类层级**：在表注中说明 `省份层面聚类稳健标准误`
 6. **星号标注**：`* p<0.10 ** p<0.05 *** p<0.01` 写在表注中。Obsidian 中用 `<sup>***</sup>` 实现上标小角标
-7. **t 值括号**：每行系数下方紧跟括号 t 值，格式 `(-5.20)`
+7. **标准误括号**：每行系数下方紧跟括号内标准误，格式 `(0.0038)`
 8. **空白单元格**：以 `—` 填充，不用空格
-9. **双格式输出**：CSV（→ Obsidian markdown pipe table）+ TeX（→ 投稿备选）
+9. **双格式输出**：HTML（→ Obsidian 预览）+ docx（→ Word 投稿），由 esttab .csv 经 esttab2html.py 生成
 10. **样本量 & Adj R² 对齐**：N 和 Adj R² 行左对齐，系数无缩进
 
 ## 图形输出强制规范
@@ -63,8 +63,8 @@ description: Use when writing Stata do-files for empirical papers.
 | 写一条完整回归 do 文件 | `do-file-standards.md` | `table-standards.md`（esttab 选项） |
 | DID 基准回归 + 平行趋势 + 事件研究 | `do-file-standards.md` | `graph-templates.md`（事件研究图） |
 | IV 回归（第一/二阶段） | `do-file-standards.md` | `econometric-checklist.md`（IV 检查） |
-| 机制检验 | `do-file-standards.md` | `table-standards.md`（机制表格式） |
-| 异质性分析 | `do-file-standards.md` | `table-standards.md`（异质性子表） |
+| 机制检验 | `do-file-standards.md` | `table-standards.md`（机制表格式见 sec 2 多列分组） |
+| 异质性分析 | `do-file-standards.md` | `table-standards.md`（异质性子表见 sec 2 多列分组） |
 | 描述统计 + Table 1 | `do-file-standards.md` | `table-standards.md`（tabstat 格式） |
 
 ### 出图任务
@@ -78,7 +78,7 @@ description: Use when writing Stata do-files for empirical papers.
 | 边缘效应图（marginsplot） | `graph-standards.md` | `graph-templates.md` → 边缘效应节 |
 | 趋势图 / 时间序列 | `graph-standards.md` | `graph-templates.md` → 趋势线节 |
 | 分布图（kdensity / histogram） | `graph-standards.md` | `graph-templates.md` → 分布节 |
-| DID 动态效应（csdid_plot） | `graph-standards.md` | `graph-templates.md` → csdid 节 |
+| DID 动态效应（csdid_plot） | `graph-standards.md` | `graph-templates.md` → sec 1 CSDID 替代 |
 | 安慰剂检验图 | `graph-standards.md` | `graph-templates.md` → 安慰剂节 |
 | RD 图 | `graph-standards.md` | `graph-templates.md` → RD 节 |
 
@@ -86,11 +86,10 @@ description: Use when writing Stata do-files for empirical papers.
 
 | 表类型 | 参考文件 |
 |--------|---------|
-| 回归表（esttab → Obsidian） | `table-standards.md` → LaTeX 输出节 + esttab2html.py |
-| 回归表（esttab → Word 投稿） | `table-standards.md` → LaTeX 输出节（同一管线） |
+| 回归表（esttab → Obsidian） | `table-standards.md` → esttab 输出节 + esttab2html.py |
+| 回归表（esttab → Word 投稿） | `table-standards.md` → esttab 输出节（同一管线） |
 | 描述统计（tabstat） | `table-standards.md` → tabstat 节 |
 | 相关系数矩阵（pwcorr） | `table-standards.md` → 相关系数节 |
-| Obsidian 三线表 CSS | `table-standards.md` → CSS 节 |
 
 ### 质量检查任务
 
@@ -132,7 +131,7 @@ paper-workflow 阶段 4（数据构建）
 paper-workflow 阶段 5（实证分析）
     ↓ 加载 stata-regression
     ↓ 获得回归模板 + 出图模板 + 计量检查清单
-    ↓ 写 do 文件 → 跑回归 → esttab2pipe.py → Obsidian 表格
+    ↓ 写 do 文件 → 跑回归 → esttab2html.py → .html + .docx
     ↓ 对照检查清单验证结果
     ↓ paper-workflow 组件决策门判断
 ```
@@ -143,9 +142,9 @@ paper-workflow 阶段 5（实证分析）
 
 ```
 Stata do 文件
-  └─ esttab → .tex (booktabs fragment) → esttab2html.py → .html + .docx
-                                         └─ pandoc 自动转换
+  └─ esttab → .csv (plain) → esttab2html.py → .html + .docx
+                             └─ Python 直接生成，不依赖 pandoc
 
-Obsidian: .html 直接插入预览（三线表 CSS 渲染）
-Word投稿: .docx 打开即可用
+Obsidian: .html 直接插入预览（三线表 inline 样式）
+Word投稿: .docx 打开即可用（宋体 10pt + 三线边框）
 ```
