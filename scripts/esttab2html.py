@@ -33,6 +33,14 @@ SUP_PATTERN = re.compile(r"\$\^(.*?)\$")
 
 DEFAULT_NOTE = "括号内为标准误；* p<0.10, ** p<0.05, *** p<0.01"
 
+# docx 宽表设置：列数 ≥ 阈值时单元格字号从 10pt 降到 8pt
+WIDE_TABLE_THRESHOLD = 7
+try:
+    from docx.shared import Pt
+    WIDE_FONT_SIZE = Pt(8)
+except ImportError:  # 未安装 python-docx 时不影响 HTML 输出
+    WIDE_FONT_SIZE = None
+
 
 def die(msg):
     print(f"错误: {msg}", file=sys.stderr)
@@ -231,10 +239,12 @@ def _set_table_borders(table):
     tblPr.append(tblBorders)
 
 
-def _write_cell(cell, text, bold=False, first=False):
+def _write_cell(cell, text, bold=False, first=False, font_size=None):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml.ns import qn
-    from docx.shared import Pt
+    from docx.shared import Pt as _Pt
+
+    font_sz = font_size or _Pt(10)
 
     cell.text = ""
     para = cell.paragraphs[0]
@@ -249,7 +259,7 @@ def _write_cell(cell, text, bold=False, first=False):
             continue
         run = para.add_run(seg)
         run.bold = bold
-        run.font.size = Pt(10)
+        run.font.size = font_sz
         run.font.name = "宋体"
         run._element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
         if k % 2 == 1:
@@ -283,13 +293,17 @@ def render_docx(parsed, title, docx_path, note=None):
     ) + len(parsed["stat_rows"])
     n_rows = len(parsed["header_rows"]) + n_body_rows
 
+    # 宽表自动缩小字号
+    font_size = WIDE_FONT_SIZE if n_cols >= WIDE_TABLE_THRESHOLD else None
+
     table = doc.add_table(rows=n_rows, cols=n_cols)
+    table.autofit = True
     _set_table_borders(table)
 
     r = 0
     for k, hr in enumerate(parsed["header_rows"]):
         for idx, text in enumerate(hr):
-            _write_cell(table.cell(r, idx), text, bold=False, first=(idx == 0))
+            _write_cell(table.cell(r, idx), text, bold=False, first=(idx == 0), font_size=font_size)
         if k == len(parsed["header_rows"]) - 1:
             # 中线（midrule）：表头最后一行单元格的下边框
             for idx in range(n_cols):
@@ -298,16 +312,16 @@ def render_docx(parsed, title, docx_path, note=None):
 
     for cr in parsed["coef_rows"]:
         for idx, text in enumerate([cr["label"]] + cr["cells"]):
-            _write_cell(table.cell(r, idx), text, first=(idx == 0))
+            _write_cell(table.cell(r, idx), text, first=(idx == 0), font_size=font_size)
         r += 1
         if cr["se"]:
             for idx, text in enumerate([""] + cr["se"]):
-                _write_cell(table.cell(r, idx), text, first=(idx == 0))
+                _write_cell(table.cell(r, idx), text, first=(idx == 0), font_size=font_size)
             r += 1
 
     for sr in parsed["stat_rows"]:
         for idx, text in enumerate(sr):
-            _write_cell(table.cell(r, idx), text, first=(idx == 0))
+            _write_cell(table.cell(r, idx), text, first=(idx == 0), font_size=font_size)
         r += 1
 
     if note and note.strip():
@@ -353,10 +367,12 @@ def main():
         html_path = os.path.join(args.output_dir, f"{basename}.html")
         docx_path = os.path.join(args.output_dir, f"{basename}.docx")
 
-    # 注脚：显式传则用传值；未传且为回归表则用默认；未传且纯数据表（tabstat）则不输出
-    note = args.note
-    if note is None and parsed["coef_rows"]:
-        note = DEFAULT_NOTE
+    # 注脚：默认注脚 + 用户追加（用；分隔）；纯数据表不输出
+    note = DEFAULT_NOTE if parsed["coef_rows"] else None
+    if note and args.note:
+        note = f"{note}；{args.note}"
+    elif args.note:
+        note = args.note
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(render_html(parsed, args.title, note=note))

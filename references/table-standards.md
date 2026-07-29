@@ -80,6 +80,10 @@ output/tables/main.html   ← Obsidian 插入用
 output/tables/main.docx   ← Word 投稿用
 ```
 
+### 插入 Obsidian
+
+生成的 .html 文件包含 inline 三线表样式。将 .html 文件内容作为 HTML 源码粘贴到 Obsidian 笔记中，切换到阅读视图即可预览。
+
 ---
 
 ## 2. 多列分组（Panel A/B 或多模型对比）
@@ -146,3 +150,13 @@ log close 后，pwcorr 结果在 .log 文件中，无需额外导出表格。
 
 - **python-docx**：`pip install python-docx`（esttab2html.py 生成 .docx 用，不依赖 pandoc）
 - **Stata**：esttab 需要 estout 包（`ssc install estout`）
+- **脚本部署**：将 `scripts/esttab2html.py` 和 `scripts/merge_tables.py` 复制到项目根目录的 `scripts/` 文件夹下
+---
+
+## 6. 合并表格为附录
+
+```bash
+python scripts/merge_tables.py output/tables/ --output output/附录-实证表格.docx
+```
+
+合并后每张表带标题，表间分页，可直接提交投稿。

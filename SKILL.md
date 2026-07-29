@@ -67,6 +67,8 @@ description: Use when writing Stata do-files for empirical papers.
 | 异质性分析 | `do-file-standards.md` | `table-standards.md`（异质性子表见 sec 2 多列分组） |
 | 描述统计 + Table 1 | `do-file-standards.md` | `table-standards.md`（tabstat 格式） |
 
+* 执行顺序见 `do-file-standards.md` §10 分析顺序
+
 ### 出图任务
 
 | 图类型 | 先读 | 再读 |
@@ -147,4 +149,5 @@ Stata do 文件
 
 Obsidian: .html 直接插入预览（三线表 inline 样式）
 Word投稿: .docx 打开即可用（宋体 10pt + 三线边框）
+  └─ .docx 文件 → merge_tables.py → 附录-实证表格.docx（合并投稿）
 ```

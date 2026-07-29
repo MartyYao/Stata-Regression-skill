@@ -53,7 +53,7 @@ set seed 20260726
 |------|------|
 | 变量名 | `snake_case`，描述性（`post`, `ln_fiscal_ratio`, `treat_score1`） |
 | Local macro | `local varlist age educ ...` |
-| 文件命名 | 镜像阶段：`01_clean.do`, `02_construct.do`, `03_analysis.do` |
+| 文件命名 | `dofiles/03_analysis/05_main_regression.do`（阶段目录 + 编号_描述） |
 | 全局宏 | `$controls`, `$prov_C` | 跨 do 文件引用的变量列表用全局宏，在 master_analysis.do 顶部定义 |
 | 本地宏 | `` `varlist' `` | 单 do 文件内的临时变量用本地宏 |
 
@@ -129,11 +129,7 @@ log close
 │   ├── 03_analysis/                 ← 主回归、机制、异质性
 │   └── 04_robustness/               ← 稳健性检验、IV、安慰剂
 │
-├── logs/                            ← 所有 .log 文件，结构与 dofiles/ 镜像
-│   ├── 01_clean/
-│   ├── 02_construct/
-│   ├── 03_analysis/
-│   └── 04_robustness/
+├── logs/                            ← 所有 .log 文件，命名对齐 do 文件（如 `logs/03_analysis_05_main_regression.log`）
 │
 ├── output/
 │   ├── tables/                      ← 所有 CSV + HTML + docx（回归表、描述统计等）
@@ -146,6 +142,21 @@ log close
 │
 └── docs/                            ← .md 文档（变量说明、数据构造记录等）
 ```
+
+### 分析顺序（严格按此顺序执行）
+
+0. 描述统计 + 相关性分析（Table 1，企业+省级全部控制变量，三位小数）
+1. 主回归（基准回归，V1/V2）
+2. 处理强度（连续得分，如 treat_score1；paper-workflow 场景下紧接主回归后）
+3. 平行趋势检验（DID 必须）
+4. 稳健性检验（替换 DV、竞争政策、PSM、Leave-One-Out）
+5. 内生性检验（IV / Heckman）
+6. 机制检验（三步法：直接效应 → 中介 → 交互项）
+7. 异质性分析（产权/市场化/地区分组）
+8. 进一步检验（经济后果等）
+
+每个检验的 do 文件命名对齐编号，放在 `dofiles/03_analysis/` 下：
+`00_describe.do`, `01_main.do`, `02_intensity.do`, `03_parallel.do`, `04_robust.do`, `05_endog.do`, `06_mech.do`, `07_hetero.do`, `08_further.do`
 
 ### 文件生命周期
 
