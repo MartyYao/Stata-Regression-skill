@@ -31,7 +31,7 @@ description: Use when writing Stata do-files for empirical papers.
 
 **Step 4 — 检查**：对照 econometric-checklist.md，确认回归参数无误
 
-**Step 5 — 输出**：运行 do 文件，用 `esttab2html.py` 将 .csv 转为 .html + .docx
+**Step 5 — 输出**：运行 do 文件，用 `esttab2html.py` 将 .csv 转为 .html；esttab 直接出 .rtf
 
 ## 回归表强制规范（CSSCI 期刊标准）
 
@@ -45,7 +45,7 @@ description: Use when writing Stata do-files for empirical papers.
 6. **星号标注**：`* p<0.10 ** p<0.05 *** p<0.01` 写在表注中。Obsidian 中用 `<sup>***</sup>` 实现上标小角标
 7. **标准误括号**：每行系数下方紧跟括号内标准误，格式 `(0.0038)`
 8. **空白单元格**：以 `—` 填充，不用空格
-9. **双格式输出**：HTML（→ Obsidian 预览）+ docx（→ Word 投稿），由 esttab .csv 经 esttab2html.py 生成
+9. **双格式输出**：HTML（→ Obsidian 预览）+ RTF（→ Word 投稿），.csv 经 esttab2html.py 出 .html，esttab 直接出 .rtf
 10. **样本量 & Adj R² 对齐**：N 和 Adj R² 行左对齐，系数无缩进
 
 ## 图形输出强制规范
@@ -144,8 +144,8 @@ paper-workflow 阶段 5（实证分析）
 
 ```
 Stata do 文件
-  └─ esttab → .csv (plain) → esttab2html.py → .html + .rtf
-                             └─ Python 直接生成，不依赖 pandoc
+  └─ esttab → .csv (plain) → esttab2html.py → .html
+  └─ esttab → .rtf → merge_rtf.py → 附录-实证表格.rtf
 
 Obsidian: .html 直接插入预览（三线表 inline 样式）
 Word投稿: .rtf 打开即可用（esttab 原生输出，Word 格式完整）

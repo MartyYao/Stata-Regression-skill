@@ -65,19 +65,20 @@ def merge(tables_dir, output_path):
             content = f.read()
 
         # 提取 RTF 文件头（第一个文件的字体表、颜色表、样式表）
+        tbl_idx = content.find("\\trowd")
+        if tbl_idx == -1:
+            print(f"⚠️ 跳过（无表格）: {fname}")
+            continue
+
         if header is None:
-            # 找到最后一个非表格的 `}` 作为文件头结束标记
-            # esttab RTF 格式：头 → `{\\pard ...}` → 表格 `\\trowd ...`
-            tbl_idx = content.find("\\trowd")
-            if tbl_idx == -1:
-                print(f"⚠️ 跳过（无表格）: {fname}")
-                continue
             header = content[:tbl_idx].rstrip() + "\n"
-        else:
-            tbl_idx = content.find("\\trowd")
-            if tbl_idx == -1:
-                continue
-            content = content[tbl_idx:]
+
+        # 截取表格部分（去掉每个文件末尾的 `}`，避免括号失配）
+        table_content = content[tbl_idx:]
+        # 去掉文件末尾的单个 `}`（RTF 文档闭合符）
+        table_content = table_content.rstrip()
+        if table_content.endswith("}"):
+            table_content = table_content[:-1].rstrip()
 
         # 标题
         title = title_from_filename(os.path.splitext(fname)[0])
@@ -87,7 +88,7 @@ def merge(tables_dir, output_path):
             + "\\par}\n\\par\n"
         )
         body_parts.append(title_rtf)
-        body_parts.append(content)
+        body_parts.append(table_content)
 
         # 表间分页（最后一表不加）
         if fname != rtf_files[-1]:
