@@ -11,8 +11,9 @@
 * Author: [自动]
 * Purpose: [本文件做什么——DID 主回归 V1，机制检验]
 * Inputs: data/derived/analysis_sample.dta
-* Outputs: output/tables/main_regression.csv
-*          output/tables/main_regression.tex
+* Outputs: output/tables/main_regression.tex
+*          output/tables/main_regression.html
+*          output/tables/main_regression.docx
 *          output/figures/event_study.pdf
 *          output/figures/event_study.png
 * Log: logs/03_analysis_05_main_regression.log
@@ -63,26 +64,21 @@ reghdfe over_v1 post $controls, absorb(Stkcd year) vce(cluster province)
 estimates store m1
 ```
 
-保存 CSV 和 TeX 双格式：
+保存 LaTeX（→ pandoc 转换为 HTML + docx）：
 
 ```stata
-* 回归表 - CSV（用于 Obsidian pipe table）
-esttab m1 m2 m3 using "output/tables/main_regression.csv", replace ///
-    cells(b(star fmt(4)) t(fmt(4))) ///
-    star(* 0.10 ** 0.05 *** 0.01) ///
-    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R²")) ///
-    title("Table 2: 基准回归 V1") ///
-    nomtitle label nonumber compress plain
-
-* 回归表 - LaTeX（用于投稿）
+* 回归表 - LaTeX（booktabs 三线表）
 esttab m1 m2 m3 using "output/tables/main_regression.tex", replace ///
-    booktabs b(4) se(4) ///
+    b(4) se(4) booktabs fragment ///
     star(* 0.10 ** 0.05 *** 0.01) ///
-    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R²")) ///
+    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R&sup2")) ///
     nomtitle label compress
+
+* 转换为 HTML + docx
+* shell python scripts/esttab2html.py output/tables/main_regression.tex
 ```
 
-**关于 `plain` 选项**：CSV 输出必须加 `plain`，否则 esttab 会用 `=""` 包裹所有值，后续 Python 处理时需要额外清洗。
+**`esttab` 的 `booktabs fragment` 选项**：生成不含 `\begin{table}` 环境的纯 LaTeX 表格代码，供 pandoc 直接处理。
 
 ## 6. 每条 do 文件必须伴随 log
 
@@ -208,8 +204,9 @@ log close
 * Author: [自动]
 * Purpose: DID 主回归 V1 + 平行趋势检验
 * Inputs: data/derived/analysis_sample.dta
-* Outputs: output/tables/main_regression.csv
-*          output/tables/main_regression.tex
+* Outputs: output/tables/main_regression.tex
+*          output/tables/main_regression.html
+*          output/tables/main_regression.docx
 *          output/figures/event_study.pdf
 *          output/figures/event_study.png
 * Log: logs/03_analysis_05_main_regression.log
@@ -261,20 +258,15 @@ eststo m3: reghdfe `outcome' `treat' `controls' `prov_C', ///
     absorb(`fe') vce(cluster `cluster')
 
 *--- 3. 输出表格 ------------------------------------------------------------
-* CSV（→ Obsidian pipe table）
-esttab m1 m2 m3 using "output/tables/main_regression.csv", replace ///
-    cells(b(star fmt(4)) t(fmt(4))) ///
-    star(* 0.10 ** 0.05 *** 0.01) ///
-    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R²")) ///
-    title("Table 2: 基准回归 V1") ///
-    nomtitle label nonumber compress plain
-
-* LaTeX（→ 投稿备选）
+* LaTeX（booktabs 三线表 → pandoc 转 HTML + docx）
 esttab m1 m2 m3 using "output/tables/main_regression.tex", replace ///
-    booktabs b(4) se(4) ///
+    b(4) se(4) booktabs fragment ///
     star(* 0.10 ** 0.05 *** 0.01) ///
-    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R²")) ///
+    stats(N r2_a, fmt(%9.0f %9.4f) labels("N" "Adj. R&sup2")) ///
     nomtitle label compress
+
+* 转换为 HTML + docx（需要在 shell 中运行）
+* shell python scripts/esttab2html.py output/tables/main_regression.tex
 
 log close
 ```
