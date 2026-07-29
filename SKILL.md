@@ -133,7 +133,7 @@ paper-workflow 阶段 4（数据构建）
 paper-workflow 阶段 5（实证分析）
     ↓ 加载 stata-regression
     ↓ 获得回归模板 + 出图模板 + 计量检查清单
-    ↓ 写 do 文件 → 跑回归 → esttab2html.py → .html + .docx
+    ↓ 写 do 文件 → 跑回归 → esttab2html.py → .html + .rtf
     ↓ 对照检查清单验证结果
     ↓ paper-workflow 组件决策门判断
 ```
@@ -144,10 +144,10 @@ paper-workflow 阶段 5（实证分析）
 
 ```
 Stata do 文件
-  └─ esttab → .csv (plain) → esttab2html.py → .html + .docx
+  └─ esttab → .csv (plain) → esttab2html.py → .html + .rtf
                              └─ Python 直接生成，不依赖 pandoc
 
 Obsidian: .html 直接插入预览（三线表 inline 样式）
-Word投稿: .docx 打开即可用（宋体 10pt + 三线边框）
-  └─ .docx 文件 → merge_tables.py → 附录-实证表格.docx（合并投稿）
+Word投稿: .rtf 打开即可用（esttab 原生输出，Word 格式完整）
+  └─ .rtf 文件 → merge_rtf.py → 附录-实证表格.rtf（合并投稿）
 ```

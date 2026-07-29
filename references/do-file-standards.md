@@ -13,7 +13,7 @@
 * Inputs: working_data.dta
 * Outputs: output/tables/main_regression.csv
 *          output/tables/main_regression.html
-*          output/tables/main_regression.docx
+*          output/tables/main_regression.rtf
 *          output/figures/event_study.pdf
 *          output/figures/event_study.png
 * Log: logs/03_analysis_05_main_regression.log
@@ -132,7 +132,7 @@ log close
 ├── logs/                            ← 所有 .log 文件，命名对齐 do 文件（如 `logs/03_analysis_05_main_regression.log`）
 │
 ├── output/
-│   ├── tables/                      ← 所有 CSV + HTML + docx（回归表、描述统计等）
+│   ├── tables/                      ← 所有 CSV + HTML + RTF（回归表、描述统计等）
 │   └── figures/                     ← 所有 PDF + PNG（事件研究图、系数图等）
 │
 ├── archive/                         ← 已废弃的旧版本、旧数据、旧过程文件
@@ -165,7 +165,7 @@ log close
      │
 首次运行 → logs/ 下生成对应 .log
      │
-产出表格 → output/tables/ 下生成 .csv → .html + .docx
+产出表格 → output/tables/ 下生成 .csv → .html + .rtf
      │
 产出图形 → output/figures/ 下生成 .pdf + .png
      │
@@ -180,9 +180,8 @@ log close
 |----------|---------|------|
 | Do 文件 | `数字_描述.do` | `03_analysis_main_regression.do` |
 | Log 文件 | 与 do 文件同名 | `03_analysis_main_regression.log` |
-| 表格 CSV | `表号_描述.csv` | `table2_main_regression.csv` |
-| 表格 HTML/docx | 与 CSV 同名 | `table2_main_regression.html/.docx` |
-| 图形 PDF | `类型_描述.pdf` | `fig_event_study.pdf` |
+| 表格 HTML | 与 CSV 同名 | `table2_main_regression.html` |
+| 表格 RTF | 与 CSV 同名 | `table2_main_regression.rtf` |
 | 图形 PNG | 与 PDF 同名 | `fig_event_study.png` |
 | 数据文件 | `描述.dta` | `working_data.dta` |
 
@@ -207,7 +206,7 @@ log close
 * Inputs: working_data.dta
 * Outputs: output/tables/main_regression.csv
 *          output/tables/main_regression.html
-*          output/tables/main_regression.docx
+*          output/tables/main_regression.rtf
 *          output/figures/event_study.pdf
 *          output/figures/event_study.png
 * Log: logs/03_analysis_05_main_regression.log
@@ -270,7 +269,7 @@ estadd local FirmFE "是"
 estadd local YearFE "是"
 
 *--- 3. 输出表格 ------------------------------------------------------------
-* CSV（plain → esttab2html.py 转 HTML + docx）
+* HTML（→ Obsidian，esttab2html.py 转换）
 esttab m1 m2 m3 using "output/tables/main_regression.csv", replace ///
     b(4) se(4) plain ///
     star(* 0.10 ** 0.05 *** 0.01) ///
@@ -279,7 +278,16 @@ esttab m1 m2 m3 using "output/tables/main_regression.csv", replace ///
         labels("Controls" "企业固定效应" "年份固定效应" "N" "Adj. R$^2$")) ///
     mtitles("(1)" "(2)" "(3)") label compress
 
-* 转换为 HTML + docx（需要在 shell 中运行）
+* RTF（→ Word，直接打开）
+esttab m1 m2 m3 using "output/tables/main_regression.rtf", replace ///
+    b(4) se(4) ///
+    star(* 0.10 ** 0.05 *** 0.01) ///
+    stats(Controls FirmFE YearFE N r2_a, ///
+        fmt(%3s %3s %3s %9.0f %9.4f) ///
+        labels("Controls" "企业固定效应" "年份固定效应" "N" "Adj. R$^2$")) ///
+    mtitles("(1)" "(2)" "(3)") label compress
+
+* 转换为 HTML（需要在 shell 中运行）
 * shell python scripts/esttab2html.py output/tables/main_regression.csv
 
 log close
