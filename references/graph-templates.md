@@ -1,82 +1,119 @@
 # Graph Templates — Stata 出图模板
 
+> 所有模板要求 `set scheme s2color`，水平网格线 `gs14 vthin`。配色见 graph-standards.md。
+
+---
+
 ## 1. 事件研究 / 平行趋势检验图
 
-### 输入数据
-
-`reghdfe` 后用 `coefplot` 直接出，或手动构造：
+**两阶段法**：TWFE 基线 → csdid（staggered DID 标准方案）。
 
 ```stata
-* 用 coefplot 直接从回归结果出图（推荐，自动处理系数和 CI）
-reghdfe over_v1 b4.rel_pos i.rel_pos $controls, ///
-    absorb(Stkcd year) vce(cluster province)
+* =============================================================================
+* 0. 项目配置 — 替换为你的变量名
+* =============================================================================
+local outcome      over_v1
+local controls     "size lev age ..."
+local unit_id      Stkcd
+local time_var     year
+local treated      post
+local first_treat  first_treat
+local cluster_var  province
+local lead_min     -5
+local lag_max      5
 
-* 提取并画事件研究图（排除基期 ib4 = rel_time=-1）
-coefplot, ///
-    keep(*.rel_pos) ///
-    coeflabels(1.rel_pos = "-4" 2.rel_pos = "-3"  ///
-               3.rel_pos = "-2" 5.rel_pos = "0"    ///
-               6.rel_pos = "1"  7.rel_pos = "2"    ///
-               8.rel_pos = "3") ///
-    xline(4.5, lcolor("128 128 128") lpattern(dash) lwidth(vthin)) ///
-    yline(0, lcolor("128 128 128") lpattern(dash) lwidth(vthin)) ///
-    mcolor("49 145 255") msymbol(O) msize(medium) ///
-    ciopts(lcolor("49 145 255")) ///
-    ytitle("系数估计值") ///
-    xtitle("距政策推行年数") ///
-    legend(off) ///
+* =============================================================================
+* 1. 载入 + 核验
+* =============================================================================
+use "working_data.dta", clear
+
+foreach var in `outcome' `unit_id' `time_var' `treated' ///
+    `first_treat' `cluster_var' {
+    capture confirm variable `var'
+    if _rc {
+        display as error "缺少变量: `var'"
+        exit 111
+    }
+}
+isid `unit_id' `time_var', sort
+
+* =============================================================================
+* 2. TWFE 基准 DID
+* =============================================================================
+reghdfe `outcome' `treated' `controls', ///
+    absorb(`unit_id' `time_var') vce(cluster `cluster_var')
+estimates store twfe_baseline
+
+* =============================================================================
+* 3. csdid（处理异质性处理效应 + 错位处理时间）
+* =============================================================================
+csdid `outcome' `controls', ///
+    ivar(`unit_id') time(`time_var') gvar(`first_treat') ///
+    method(dripw) notyet
+
+* 聚合处理效应
+estat simple
+
+* 事件研究 + 正式预趋势检验
+estat event, window(`lead_min' `lag_max') estore(csdid_event)
+estat pretrend, pre(`=abs(`lead_min')')
+
+* =============================================================================
+* 4. 出图
+* =============================================================================
+csdid_plot, ///
     graphregion(fcolor(white) lcolor(white)) ///
     plotregion(fcolor(white) lcolor(white))
-```
 
-### 关键参数
-
-| 参数 | 值 | 说明 |
-|------|-----|------|
-| 基期 | `rel_time = -1` | 处理前一期，非边界 |
-| 偏移 | `gen rel_pos = rel_time + 5` | 避免 Stata 因子变量负值报错 |
-| 参考线 | `xline(4.5)` | 在 -1 和 0 之间画竖线 |
-| 窗口 | 通常 `leads = -5` 到 `lags = +5` | 根据面板长度调整 |
-
-### CSDID 替代
-
-```stata
-csdid over_v1 $controls, ivar(Stkcd) time(year) gvar(first_treat)
-estat event, window(-5 5) estore(csdid_event)
-csdid_plot, name(event_study, replace)
 graph export "output/figures/event_study.pdf", replace
-graph export "output/figures/event_study.png", replace width(1800)
+graph export "output/figures/event_study.png", replace width(1600)
 ```
+
+> **为什么不用 coefplot + reghdfe 手工出事件研究图？**  
+> reghdfe + `i.rel_pos` + coefplot 需要手动 coeflabels 映射、负值偏移、基期选择——rel_time 范围一变整套标注就错。csdid 的 `estat event` + `csdid_plot` 自动处理这些，是 staggered DID 的标准方案。
+
+---
 
 ## 2. 系数图 — 单模型
 
 ```stata
-* 适用：异质性分组、机制变量各自跑回归后画系数排列
+set scheme s2color
+
 coefplot, ///
-    drop(*.cons *.year *.Stkcd) ///
+    drop(*.cons) ///
     xline(0, lcolor("128 128 128") lpattern(dash)) ///
     mcolor("49 145 255") msymbol(O) ///
     ciopts(lcolor("49 145 255")) ///
-    graphregion(fcolor(white) lcolor(white))
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 ```
+
+---
 
 ## 3. 系数图 — 多模型对比
 
 ```stata
-* 适用：M1→M6 逐步加入控制变量/FE，展示系数稳定性
+set scheme s2color
+
 coefplot m1 || m2 || m3 || m4 || m5 || m6, ///
     keep(post) ///
     vertical ///
     xline(0, lcolor("128 128 128") lpattern(dash)) ///
     mcolor("49 145 255") ///
     ciopts(lcolor("49 145 255")) ///
-    graphregion(fcolor(white) lcolor(white))
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 ```
+
+---
 
 ## 4. 异质性分析图
 
 ```stata
-* 适用：SOE vs 非 SOE、东中西部分组
+set scheme s2color
+
 coefplot (m_soe, label("国有企业")) ///
          (m_non_soe, label("非国有企业")) ///
          (m_east, label("东部")) ///
@@ -85,31 +122,40 @@ coefplot (m_soe, label("国有企业")) ///
     xline(0, lcolor("128 128 128") lpattern(dash)) ///
     mcolor("49 145 255") ///
     ciopts(lcolor("49 145 255")) ///
-    graphregion(fcolor(white) lcolor(white))
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 ```
 
-## 5. 边缘效应图
+---
+
+## 5. 边缘效应图（marginsplot）
 
 ```stata
-* 适用：连续处理变量的剂量-反应
+set scheme s2color
+
 reghdfe over_v1 c.treat_score1 $controls, ///
     absorb(Stkcd year) vce(cluster province)
 
-margins, at(treat_score1 = (0(1)5))
+margins, at(treat_score1 = (0(1)5)) post
 marginsplot, ///
     xlabel(0 "0" 1 "1" 2 "2" 3 "3" 4 "4" 5 "5") ///
-    ytitle("预测 DV 值") ///           （根据实际 DV 改）
+    ytitle("预测值") ///                    ← 替换为实际 DV
     xtitle("处理强度得分") ///
-    ciopts(lcolor("182 211 245") lwidth(none) lpattern(solid)) ///
-    recast(line) ///
-    plotopts(lcolor("49 145 255") lwidth(medium)) ///
-    graphregion(fcolor(white) lcolor(white))
+    ciopts(lcolor("182 211 245") lwidth(none)) ///
+    recast(line) plotopts(lcolor("49 145 255") lwidth(medium)) ///
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 ```
+
+---
 
 ## 6. 趋势图
 
 ```stata
-* 适用：展示处理组/控制组 DV 随时间走势
+set scheme s2color
+
 preserve
 collapse (mean) over_v1, by(year treat_group)
 twoway (line over_v1 year if treat_group == 1, ///
@@ -117,44 +163,54 @@ twoway (line over_v1 year if treat_group == 1, ///
        (line over_v1 year if treat_group == 0, ///
         lcolor("142 164 184") lwidth(thin) lpattern(dash)), ///
     xline(2018, lcolor("128 128 128") lpattern(dash)) ///
-    ytitle("DV 均值") ///           （根据实际 DV 改）
+    ytitle("DV 均值") ///                    ← 替换为实际 DV
     xtitle("年份") ///
     legend(order(1 "处理组" 2 "控制组") pos(6) ring(0)) ///
-    graphregion(fcolor(white) lcolor(white))
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 restore
 ```
+
+---
 
 ## 7. 安慰剂检验图
 
 ```stata
-* 适用：随机分配处理组后重跑 DID，积累 500/1000 次系数分布
-* （实际运行时循环 500-1000 次，收集系数放入 placebo_coefs.dta）
+set scheme s2color
 
-* 画图
-use "archive/datasets/placebo_coefs.dta", clear
-
-* 从回归结果获取真实系数做参考线
+* 循环前先存真实系数（不要依赖 use 后 e() 幸存）
 local true_coef = _b[post]
+
+* 运行 500-1000 轮随机置换后：
+use "archive/datasets/placebo_coefs.dta", clear
 
 kdensity coef, ///
     lcolor("49 145 255") lwidth(medium) ///
-    xline(`true_coef', lcolor("red") lpattern(dash)) ///
+    xline(`true_coef', lcolor("198 40 40") lpattern(dash)) ///
     ytitle("密度") ///
     xtitle("安慰剂检验系数") ///
-    graphregion(fcolor(white) lcolor(white))
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 ```
+
+---
 
 ## 8. 分布图
 
 ```stata
-* 适用：检查变量分布、winsorize 效果
+set scheme s2color
+
 * 直方图
 histogram over_v1, ///
     color("182 211 245") ///
     lcolor("49 145 255") lwidth(vthin) ///
-    ytitle("频数") ///              （根据实际变量改）
-    xtitle("over_v1") ///           （根据实际变量改）
-    graphregion(fcolor(white) lcolor(white))
+    ytitle("频数") ///
+    xtitle("over_v1") ///                    ← 替换为实际变量
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 
 * 核密度叠加（处理组 vs 控制组）
 kdensity over_v1 if treat_group == 1, ///
@@ -162,48 +218,50 @@ kdensity over_v1 if treat_group == 1, ///
     addplot(kdensity over_v1 if treat_group == 0, ///
             lcolor("142 164 184") lwidth(thin) lpattern(dash)) ///
     legend(order(1 "处理组" 2 "控制组")) ///
-    graphregion(fcolor(white) lcolor(white))
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white)) ///
+    ylabel(, grid glcolor(gs14) glwidth(vthin))
 ```
+
+---
 
 ## 9. RD 图（断点回归）
 
 ```stata
-* 适用：断点回归设计（RDD）可视化
-* 前提：已用 rdrobust 估算
+set scheme s2color
 
-* 用 rdplot 出图
+* rdplot（前提：已用 rdrobust 估算）
 rdplot over_v1 treat_score1, ///
-    c(3)              /* 断点值 */ ///
-    p(2)              /* 多项式阶数 */ ///
-    nbins(20 20)      /* 断点左右分箱数 */ ///
+    c(3) nbins(20 20) p(2) ///
     graph_options( ///
         graphregion(fcolor(white) lcolor(white)) ///
         plotregion(fcolor(white) lcolor(white)) ///
-        ytitle("DV 均值") ///
-        xtitle("Running variable") /// （根据实际变量改）
-        legend(off) /// （或自定义 legend）
-    )
-graph export "output/figures/rd_plot.pdf", replace
-graph export "output/figures/rd_plot.png", replace width(1800)
+        ytitle("DV 均值") ///                ← 替换为实际 DV
+        xtitle("Running variable") ///       ← 替换为实际变量
+        ylabel(, grid glcolor(gs14) glwidth(vthin)))
 
-* 也可用 binscatter 包
-* ssc install binscatter, replace
+graph export "output/figures/rd_plot.pdf", replace
+graph export "output/figures/rd_plot.png", replace width(1600)
+
+* binscatter 替代（需安装：ssc install binscatter）
 binscatter over_v1 treat_score1, ///
-    rd(3)             /* 断点 = 3 */ ///
-    linetype(none)    /* 不画全局线性拟合 */ ///
-    by(above)         /* 断点左右分别拟合 */ ///
-    graphregion(fcolor(white) lcolor(white))
+    rd(3) linetype(none) by(above) ///
+    graphregion(fcolor(white) lcolor(white)) ///
+    plotregion(fcolor(white) lcolor(white))
+
 graph export "output/figures/rd_binscatter.pdf", replace
+graph export "output/figures/rd_binscatter.png", replace width(1600)
 ```
+
+---
 
 ## 出图通用检查清单
 
-- [ ] `set scheme` 已设（推荐 `plotplain`）
-- [ ] PDF + PNG 双格式导出
-- [ ] 白色背景、无边框
-- [ ] 水平网格线、无垂直网格线
-- [ ] 焦点蓝色 "49 145 255"，对比灰蓝 "142 164 184"
-- [ ] 轴标签大小适当（`vsmall`/`small`）
-- [ ] 图例不影响数据区域
-- [ ] X/Y 轴标题存在且有意义
-- [ ] 如有参考线，线型为虚线
+- [ ] `set scheme s2color` 已设
+- [ ] PDF + PNG 双格式，width 1600
+- [ ] 白色背景，无边框
+- [ ] 水平网格线 `gs14 vthin`，无垂直网格线
+- [ ] 焦点 "49 145 255"，对比 "142 164 184"
+- [ ] 轴标签 `labsize(small)`，标题存在且有意义
+- [ ] 图例不遮挡数据区域
+- [ ] 参考线虚线
