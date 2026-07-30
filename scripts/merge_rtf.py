@@ -96,6 +96,9 @@ def merge(tables_dir, output_path):
 
         print(f"✅ {fname} → {title}")
 
+    if not body_parts:
+        die("所有 .rtf 文件中均未找到表格")
+
     # 组装完整 RTF
     output = header + "\n".join(body_parts) + "\n}"
 
