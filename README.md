@@ -72,7 +72,7 @@
 | 9 | 稳健性 | 每次只变一个参数 |
 | 10 | Log 验证 | 每个数值必须有 log 源 |
 
-### 6. 高频陷阱速查（24 条）
+### 6. 高频陷阱速查（40 条，2026-07 实证项目新增 14 条）
 
 覆盖：
 - 数据与回归陷阱（`corr` → `pwcorr`、大额变量未取对数等）
@@ -131,7 +131,7 @@ stata-regression/
 │   ├── graph-standards.md             ← 图形质量标准（RGB 色号/线型/导出）
 │   ├── graph-templates.md             ← 9 类出图模板
 │   ├── econometric-checklist.md       ← 10 条计量质量检查
-│   └── stata-pitfalls.md              ← 24 条高频陷阱速查
+│   └── stata-pitfalls.md              ← 40 条陷阱速查（26 基础 + 14 实战）
 └── scripts/
     ├── esttab2html.py                 ← esttab CSV → HTML
     └── merge_rtf.py                   ← 合并 .rtf 为附录
@@ -202,6 +202,7 @@ stata-regression/
 
 | 版本 | 日期 | 更新内容 |
 |------|------|---------|
+| **v0.2.3** | 2026-08-01 | 合并 stata-empirical 经验库：陷阱 26→41 条（新增 PSM-DID 时变匹配、HonestDiD 基期列、倒 V 型诊断、省级控制过度参数化等 14 条实战坑），新增 8 个诊断方案 references（HonestDiD/PSM/倒 V/跨组动态/纯控制组等）、master-do-template.do 模板、TeX 输出规范（4 位小数+t 值）、交流用语规范、快速诊断运行模式、IV F 读取经验。frontmatter 新增 version 字段 |
 | **v0.2.2** | 2026-07-30 | 图形部分完全对齐 codex-stata-for-economists：事件研究改用 csdid（废弃 coefplot），scheme 统一 s2color，网格线 gs14 vthin，补完整配色和字体规范 |
 | **v0.2.1** | 2026-07-28 | 输出管线完全重写：废弃 pandoc，改为 CSV→Python→HTML+docx。重写 esttab2html.py，新增 --note/--title/--output-dir，空白单元格自填 —。经 K3 + Claude Code 四轮审查 |
 | **v0.2.0** | 2026-07-28 | 表格输出管线重构：用 pandoc（esttab→.tex→.html+.docx）取代 CSV→pipe table 路线。新增 esttab2html.py，废弃 esttab2pipe.py |

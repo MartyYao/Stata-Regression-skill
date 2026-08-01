@@ -9,15 +9,24 @@ Before writing or modifying any Stata do-file, read `SKILL.md` for the routing t
 ## Repository Map
 
 ```
-SKILL.md                           → Routing table + execution protocol
-references/do-file-standards.md    → Do-file template + coding conventions
-references/table-standards.md      → esttab output + table formatting
-references/graph-standards.md      → Graph style (colors, line types, export)
-references/graph-templates.md      → Graph code templates (event study, coefplot, etc.)
-references/econometric-checklist.md → 10 quality checks per regression
-references/stata-pitfalls.md       → 24 common Stata mistakes
-scripts/esttab2html.py             → CSV → HTML converter
-scripts/merge_rtf.py                → RTF merger for appendix
+SKILL.md                                  → Routing table + execution protocol
+references/do-file-standards.md           → Do-file template + coding conventions
+references/table-standards.md             → esttab output + table formatting (+ TeX section)
+references/graph-standards.md             → Graph style (colors, line types, export)
+references/graph-templates.md             → Graph code templates (event study, coefplot, etc.)
+references/econometric-checklist.md       → 10 quality checks per regression
+references/econometric-best-practices.md  → Full econometric conventions (weights, bootstrap, HonestDiD)
+references/stata-pitfalls.md              → 41 Stata mistakes (25 base + 14 project + 2 top10 align)
+references/honestdid-stata-notes.md       → HonestDiD sensitivity analysis walkthrough
+references/psm-did-matching-specs.md      → PSM-DID matching specs (ever_treated rule, yearly PSM)
+references/psm-parallel-trends-diagnosis.md → PSM + parallel trend failure diagnosis
+references/pure-control-event-study.md    → Pure control group event study setup
+references/inverted-v-pretrend-diagnosis.md → Inverted-V pretrend diagnosis framework
+references/cross-group-dynamics-decomposition.md → Threshold-free decomposition (convergence/cross-group/flip)
+references/suppression-effect-diagnosis.md → Sub-sample suppression effect diagnosis
+templates/master-do-template.do           → Master do-file template
+scripts/esttab2html.py                    → CSV → HTML converter
+scripts/merge_rtf.py                       → RTF merger for appendix
 ```
 
 ## Non-Negotiable Rules

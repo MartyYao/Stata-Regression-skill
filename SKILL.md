@@ -1,6 +1,7 @@
 ---
 name: stata-regression
 description: Use when writing Stata do-files for empirical papers.
+version: 0.2.3
 ---
 
 # Stata Regression — 实证论文 Stata 工作流
@@ -19,6 +20,13 @@ description: Use when writing Stata do-files for empirical papers.
 - Python 数据预处理
 - 论文写作与润色
 
+## 交流用语规范（用户纠正 2026-07-31）
+
+- 与用户交流实证内容时**避免英文缩写**（DV/IV/PT/FE 等）——用户问过"DV是啥"。
+  用中文全称：被解释变量/解释变量/平行趋势/固定效应；首次使用缩写时附全称。
+- 概念名词先给定义再展开（如"基期"有两种含义：事件研究基期 = t-1 vs 分组基期 =
+  处理前最后一期，须区分），不要假设用户记得构造细节。
+
 ## 执行协议
 
 每段 Stata 代码编写前按以下顺序执行：
@@ -33,6 +41,17 @@ description: Use when writing Stata do-files for empirical papers.
 
 **Step 5 — 输出**：运行 do 文件，用 `esttab2html.py` 将 .csv 转为 .html；esttab 直接出 .rtf
 
+## 快速诊断运行模式
+
+当用户只要求看结果（不保存表格）时，用以下三步骤：
+
+1. **写 do 文件**：内容包含目标分析 + 完整控制变量 + 固定效应，并在开头加 `log using "/tmp/<name>.log", replace text`
+2. **运行**：`cd "/Applications/Stata 18" && ./StataMP.app/Contents/MacOS/stata-mp -b do /tmp/<name>.do`（必须 `-b` 才有 log；`-e` 模式不写 log 文件）
+3. **读 log**：`cat /tmp/<name>.log | grep -v "^>"`（过滤 heredoc 行）
+
+**典型场景**：平行趋势快速核对、IV 第一阶段 F 值验证、系数方向确认。
+**注意**：macOS 上 Stata 必须从安装目录启动（license 定位），CWD 是安装目录不是项目目录——do 文件内显式 `cd` 到数据目录。CLI 环境细节（二进制路径、`-e` vs `-b` 区别）见 stata-cli-workflow 技能。
+
 ## 回归表强制规范（CSSCI 期刊标准）
 
 以下规范为硬性要求，违反即退回：
@@ -43,7 +62,7 @@ description: Use when writing Stata do-files for empirical papers.
 4. **Adj R²**：必须内嵌于表格最后两行之一，与 N 相邻
 5. **聚类层级**：在表注中说明 `省份层面聚类稳健标准误`
 6. **星号标注**：`* p<0.10 ** p<0.05 *** p<0.01` 写在表注中。Obsidian 中用 `<sup>***</sup>` 实现上标小角标
-7. **标准误括号**：每行系数下方紧跟括号内标准误，格式 `(0.0038)`
+7. **标准误括号**：每行系数下方紧跟括号内标准误，格式 `(0.0038)`。**此规则适用于 HTML/RTF 展示管线**（`b(4) se(4)`）；TeX/数据存档管线（`cells(b t)`）括号内为 **t 值**——两条管线并存，见 `table-standards.md` §5
 8. **空白单元格**：以 `—` 填充，不用空格
 9. **双格式输出**：HTML（→ Obsidian 预览）+ RTF（→ Word 投稿），.csv 经 esttab2html.py 出 .html，esttab 直接出 .rtf
 10. **样本量 & Adj R² 对齐**：N 和 Adj R² 行左对齐，系数无缩进
@@ -60,7 +79,7 @@ description: Use when writing Stata do-files for empirical papers.
 
 | 任务 | 先读 | 再读 |
 |------|------|------|
-| 写一条完整回归 do 文件 | `do-file-standards.md` | `table-standards.md`（esttab 选项） |
+| 写一条完整回归 do 文件 | `do-file-standards.md` | `table-standards.md`（esttab 选项）；可直接套用 `templates/master-do-template.do` |
 | DID 基准回归 + 平行趋势 + 事件研究 | `do-file-standards.md` | `graph-templates.md`（事件研究图） |
 | IV 回归（第一/二阶段） | `do-file-standards.md` | `econometric-checklist.md`（IV 检查） |
 | 机制检验 | `do-file-standards.md` | `table-standards.md`（机制表格式见 sec 2 多列分组） |
@@ -118,7 +137,47 @@ description: Use when writing Stata do-files for empirical papers.
 | 9 | `reghdfe` 中途报 insufficient obs | 某列无法估计 | 检查该变量样本量 + singleton 处理 |
 | 10 | 回归表用 ✓ 省略控制变量 | 投稿退回 | 逐行列全部系数和 SE，仅 FE 可用 ✅ |
 
-> 完整陷阱列表见 `references/stata-pitfalls.md`
+> 完整陷阱列表见 `references/stata-pitfalls.md`（41 条：25 条基础坑 + 14 条实战坑 + 2 条速查对齐）
+
+## 实战经验（2026-07 实证项目沉淀）
+
+### IV F 值读取（实测 2026-07-30）
+
+- `ivreghdfe` 估计后 KP rk Wald F 在 `e(widstat)`，直接 `di e(widstat)` 读取（estat firststage 在 ivreghdfe 后可能静默无输出）
+- `ivreg2 ... partial(Stkcd year)` 报 `r(198)`——partial() 里的变量必须同时在回归列表中；高维固定效应场景直接用 ivreghdfe 替代
+- **`ivreg2` 不支持 reghdfe 风格的 `absorb(Stkcd year)` 语法**——会静默失败（`capture` 下无输出，e(widstat) 取不到）；reghdfe 第一阶段无 `_varb` 矩阵（那是 ivreg2 的），交互项组合效应（post+post×flip 等）用 `lincom` 计算
+- 单工具变量时第一阶段 t² ≈ KP F（快速估算），但报告值以 ivreghdfe/ivreg2 输出的 e(widstat) 为准
+- reghdfe 表头的 e(F) 是模型整体 F，**不是**弱工具变量检验值；报告 IV 只写 KP rk Wald F + Stock-Yogo 临界值
+
+### 机制检验专项
+
+- **三步法不可用于固定特征 M**（pc_any/SOE/srdi_any）——M 必须有时序变异
+- **研发投入类变量做 M 的内生性**——补贴→研发存在反向因果
+- **经济后果全不显著**——从唯一通过的那条倒退故事，不强凑
+- **机制批量探索策略**：先批量跑 Step2（M~post），p<0.05 的才进 Step3
+
+### 诊断方案参考（实证踩坑的完整方法论）
+
+| 场景 | 参考文件 |
+|------|---------|
+| 平行趋势不通过 → HonestDiD 敏感性分析（Rambachan & Roth 2023），含 e(b) 基期列提取坑、numpre + 显式矩阵调用、论文表述模板 | `references/honestdid-stata-notes.md` |
+| 事件研究"事前显著正→事后显著负"倒 V 型 → 四种解释与判别检验，符号一致子样本是关键 | `references/inverted-v-pretrend-diagnosis.md` |
+| 多期 DID 的 PSM 匹配（ever_treated 时不变铁律、逐年 PSM、_weight>1 异常信号） | `references/psm-did-matching-specs.md` |
+| PSM 后平行趋势仍失败 → 成员切换 vs 真实趋势诊断 | `references/psm-parallel-trends-diagnosis.md` |
+| 事件研究控制组污染 → 纯控制组设定（never-treated 省份 rel_time=-1） | `references/pure-control-event-study.md` |
+| 残差法 over/under 拆分后跨组动态（无阈值连续分解三边际 DID、基期状态分组、θ 任意性） | `references/cross-group-dynamics-decomposition.md` |
+| 残差法子样本 suppress/翻转效应诊断 | `references/suppression-effect-diagnosis.md` |
+| 计量规范全文（聚类/固定效应/权重/自助法/HonestDiD/表报告） | `references/econometric-best-practices.md` |
+
+## 依赖包
+
+```stata
+ssc install reghdfe ftools estout ivreg2 ranktest boottest csdid eventstudyinteract psmatch2 honestdid coefplot, replace
+```
+
+- `psmatch2`：PSM 匹配（psm-did-matching-specs.md 必需）
+- `honestdid`：HonestDiD 敏感性分析（honestdid-stata-notes.md 必需）
+- `coefplot`：系数图/事件研究图（graph-templates.md、master-do-template.do 必需）
 
 ## 与 paper-workflow 的集成
 

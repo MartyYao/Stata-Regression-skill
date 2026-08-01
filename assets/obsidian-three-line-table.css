@@ -1,0 +1,66 @@
+/* 
+ * obsidian-three-line-table.css 
+ * 三线表样式 — 适用于 Obsidian 预览模式
+ * 
+ * 安装：复制到 .obsidian/snippets/
+ * 启用：设置 → 外观 → CSS 片段 → 刷新并启用
+ * 
+ * 效果：pipe table 在预览模式下渲染为顶粗底粗 + 表头细线的三线表
+ */
+
+/* 表格整体：顶粗线 + 底粗线 */
+.markdown-rendered table {
+  border-collapse: collapse;
+  border-top: 2.25px solid #000;
+  border-bottom: 2.25px solid #000;
+  margin: 1.5em 0;
+  font-size: 0.875em;
+  width: 100%;
+  line-height: 1.4;
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+/* 表头下方细线 */
+.markdown-rendered thead {
+  border-bottom: 1.5px solid #000;
+}
+
+/* 去掉默认的单元格边框（格子线） */
+.markdown-rendered th,
+.markdown-rendered td {
+  border: none;
+  padding: 5px 10px;
+  text-align: center;
+  vertical-align: top;
+}
+
+/* 第一列（变量名列）左对齐 */
+.markdown-rendered th:first-child,
+.markdown-rendered td:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* t 值行字号缩小 */
+.markdown-rendered td:first-child:empty ~ td {
+  font-size: 0.85em;
+  color: #444;
+}
+
+/* 末行（表注）左对齐 + 缩小字号 */
+.markdown-rendered tbody tr:last-child td {
+  font-size: 0.8em;
+  text-align: left;
+  color: #555;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+/* 星号标记保留原样 */
+.markdown-rendered table em,
+.markdown-rendered table strong {
+  font-style: normal;
+  font-weight: normal;
+}

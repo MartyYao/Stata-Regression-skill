@@ -134,7 +134,38 @@ pwcorr over_v1 over_v2 size lev age ..., obs sig star(0.05)
 
 ---
 
+<<<<<<< HEAD
 ## 5. 前置条件
 
+=======
+## 5. TeX 输出（LaTeX 投稿 / 数据存档）
+
+用户偏好：论文表格系数和 t 值 **4 位小数**，括号内展示 **t 值**（非标准误），同时导出 CSV + TeX（+ HTML/RTF 展示管线）：
+
+```stata
+esttab m1 m2 m3 using "output/tables/table2_main.csv", replace ///
+    cells(b(star fmt(4)) t(fmt(4))) ///
+    stats(N r2_a, fmt(0 3)) ///
+    star(* 0.10 ** 0.05 *** 0.01) ///
+    nonumbers nomtitles collabels(none) label
+
+esttab m1 m2 m3 using "output/tables/table2_main.tex", replace ///
+    cells(b(star fmt(4)) t(fmt(4))) ///
+    stats(N r2_a, fmt(0 3)) ///
+    star(* 0.10 ** 0.05 *** 0.01) ///
+    booktabs nomtitles collabels(none) label
+```
+
+- 描述统计：**3 位小数**
+- 每列必须报告 N 和 Adj R²，固定效应在表下方标注（企业固定效应 / 年份固定效应 / 省份聚类）
+- 不省略控制变量——每行控制变量列出系数和 t 值
+
+> Obsidian 中显著性星号必须用 `<sup>***</sup>` 包裹（裸写 `***` 会被 markdown 解析吞掉）。
+
+---
+
+## 6. 前置条件
+
+>>>>>>> 568dcef (v0.2.3: merge stata-empirical experience library)
 - **Stata**：esttab 需要 estout 包（`ssc install estout`）
 - **脚本部署**：将 `scripts/esttab2html.py` 和 `scripts/merge_rtf.py` 复制到项目根目录的 `scripts/` 文件夹下
