@@ -1,7 +1,7 @@
 ---
 name: stata-regression
 description: Use when writing Stata do-files for empirical papers.
-version: 0.2.3
+version: 0.2.4
 ---
 
 # Stata Regression — 实证论文 Stata 工作流
@@ -50,7 +50,7 @@ version: 0.2.3
 3. **读 log**：`cat /tmp/<name>.log | grep -v "^>"`（过滤 heredoc 行）
 
 **典型场景**：平行趋势快速核对、IV 第一阶段 F 值验证、系数方向确认。
-**注意**：macOS 上 Stata 必须从安装目录启动（license 定位），CWD 是安装目录不是项目目录——do 文件内显式 `cd` 到数据目录。CLI 环境细节（二进制路径、`-e` vs `-b` 区别）见 stata-cli-workflow 技能。
+**注意**：macOS 上 Stata 必须从安装目录启动（license 定位），CWD 是安装目录不是项目目录——do 文件内显式 `cd` 到数据目录。
 
 ## 回归表强制规范（CSSCI 期刊标准）
 
@@ -136,6 +136,8 @@ version: 0.2.3
 | 8 | `esttab keep()` 不匹配因子名 | 找不到变量 | 用偏移后的变量名 |
 | 9 | `reghdfe` 中途报 insufficient obs | 某列无法估计 | 检查该变量样本量 + singleton 处理 |
 | 10 | 回归表用 ✓ 省略控制变量 | 投稿退回 | 逐行列全部系数和 SE，仅 FE 可用 ✅ |
+| 11 | 事件研究图竖线错位（画在 rel=1 而非 0） | xline 用了期数标签而非 x 坐标 | 竖线 = `xline(偏移量)`（x = rel_time + 偏移，0 期 → xline(6)） |
+| 12 | 事件研究图漏画最后一期（+6 无点） | `set obs` 少于期数 | `set obs` = 全部期数（-5..+6 → 12），`forvalues` 同步 0/11 |
 
 > 完整陷阱列表见 `references/stata-pitfalls.md`（41 条：25 条基础坑 + 14 条实战坑 + 2 条速查对齐）
 
