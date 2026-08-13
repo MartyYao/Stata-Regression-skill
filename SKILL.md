@@ -1,7 +1,7 @@
 ---
 name: stata-regression
 description: Use when writing Stata do-files for empirical papers.
-version: 0.2.4
+version: 0.2.5
 ---
 
 # Stata Regression — 实证论文 Stata 工作流
@@ -99,6 +99,7 @@ version: 0.2.4
 | 边缘效应图（marginsplot） | `graph-standards.md` | `graph-templates.md` → 边缘效应节 |
 | 趋势图 / 时间序列 | `graph-standards.md` | `graph-templates.md` → 趋势线节 |
 | 分布图（kdensity / histogram） | `graph-standards.md` | `graph-templates.md` → 分布节 |
+| 匹配平衡性图（Love plot / 标准化偏差） | `graph-standards.md` | `graph-templates.md` → Love plot 节 |
 | DID 动态效应（csdid_plot） | `graph-standards.md` | `graph-templates.md` → sec 1 CSDID 替代 |
 | 安慰剂检验图 | `graph-standards.md` | `graph-templates.md` → 安慰剂节 |
 | RD 图 | `graph-standards.md` | `graph-templates.md` → RD 节 |
@@ -111,6 +112,16 @@ version: 0.2.4
 | 回归表（esttab → Word 投稿） | `table-standards.md` → esttab 输出节（同一管线） |
 | 描述统计（tabstat） | `table-standards.md` → tabstat 节 |
 | 相关系数矩阵（pwcorr） | `table-standards.md` → 相关系数节 |
+
+### 版本管理任务（v0.2.5）
+
+| 任务 | 工具 | 用法 |
+|------|------|------|
+| 开新 run（归档旧表 + 建 tag 目录 + MAPPING） | `scripts/rerun.sh` | `bash rerun.sh new "20260813_v4"`（do 模板 `global TAG` 配合） |
+| 查看当前 run 状态 | `scripts/rerun.sh` | `bash rerun.sh status` |
+| 正文数字 vs CSV 对账（准入审查/审计） | `scripts/verify-numbers.py` | `python3 verify-numbers.py <正文md> --tables output/tables/<tag>/ --state-line` |
+
+> **铁律（2026-08-13 定案）**：CSV 只允许输出到 `output/tables/$TAG/`（do 模板已强制），禁止写根目录——原地覆盖是"正文数字追溯无门"的根源。开新 run 必须走 rerun.sh，旧表自动归档到 `output/archive/tables_<旧tag>/`。
 
 ### 质量检查任务
 
@@ -174,7 +185,7 @@ version: 0.2.4
 ## 依赖包
 
 ```stata
-ssc install reghdfe ftools estout ivreg2 ranktest boottest csdid eventstudyinteract psmatch2 honestdid coefplot, replace
+ssc install reghdfe ftools estout ivreg2 ranktest boottest csdid eventstudyinteract psmatch2 pstest honestdid coefplot, replace
 ```
 
 - `psmatch2`：PSM 匹配（psm-did-matching-specs.md 必需）

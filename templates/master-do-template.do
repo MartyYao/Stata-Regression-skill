@@ -4,17 +4,18 @@
 * Author:  [YOUR NAME]
 * Purpose: [Describe the task: e.g. Estimate main DID specification]
 * Inputs:  data/derived/analysis_sample.dta
-* Outputs: output/tables/main_regression.csv
-*          output/tables/main_regression.tex
+* Outputs: output/tables/$TAG/tableNN.csv
+*          output/tables/$TAG/tableNN.tex
 *          output/figures/event_study.pdf
 *          output/figures/event_study.png
-* Log:     logs/03_analysis_<name>.log
+* Log:     logs/$TAG/<表号>_<内容>.log
 *
 * 使用说明：
 *   1. 将本文件复制到 dofiles/03_analysis/ 下
 *   2. 在 Section 0 中替换变量名
 *   3. 确认 data/derived/ 下的输入文件已就绪
 *   4. 取消 dofiles/00_master.do 中对应的调用
+*   5. 开新 run 前先执行 rerun.sh new "YYYYMMDD_vN"（见 stata-regression 技能）
 *------------------------------------------------------------------------------
 version 17
 clear all
@@ -22,15 +23,16 @@ set more off
 set varabbrev off
 capture mkdir "logs"
 capture mkdir "output"
-capture mkdir "output/tables"
+capture mkdir "output/tables/$TAG"
 capture mkdir "output/figures"
 capture log close
-log using "logs/03_analysis_<name>.log", replace text
+log using "logs/$TAG_<name>.log", replace text
 set seed 20260726
 
 *--- 0. 项目配置 --------------------------------------------------------------
-* 将这些占位变量名改为实际分析样本中的变量名。
-* 注释说明每个选择（聚类层级、FE、处理变量构造）。
+* Run Tag：每次全量重跑/样本口径变更 = 新 tag（rerun.sh new 创建目录）。
+* 输出路径一律用 output/tables/$TAG/，禁止写根目录（防覆盖旧结果）。
+global TAG = "YYYYMMDD_vN"
 
 local analysis_data  "data/derived/analysis_sample.dta"
 local outcome        outcome_var
@@ -100,14 +102,14 @@ reghdfe `outcome' `treated' `controls' `prov_controls', ///
 estimates store m3
 
 * 导出主回归表
-esttab m1 m2 m3 using "output/tables/main_regression.csv", replace ///
+esttab m1 m2 m3 using "output/tables/$TAG/tableNN.csv", replace ///
     cells(b(star fmt(4)) t(fmt(4))) ///
     stats(N r2_a, fmt(0 3)) ///
     star(* 0.10 ** 0.05 *** 0.01) ///
     nonumbers nomtitles collabels(none) label ///
     title("主回归：基准 DID 结果")
 
-esttab m1 m2 m3 using "output/tables/main_regression.tex", replace ///
+esttab m1 m2 m3 using "output/tables/$TAG/tableNN.tex", replace ///
     cells(b(star fmt(4)) t(fmt(4))) ///
     stats(N r2_a, fmt(0 3)) ///
     star(* 0.10 ** 0.05 *** 0.01) ///
