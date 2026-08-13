@@ -202,6 +202,7 @@ stata-regression/
 
 | 版本 | 日期 | 更新内容 |
 |------|------|---------|
+| **v0.2.5** | 2026-08-13 | 实证版本可追溯工具链：新增 `rerun.sh`（开新 run 唯一入口——归档旧表到 output/archive/、建 tag 目录、更新 MAPPING.md）+ `verify-numbers.py`（正文表格数字 vs CSV 自动对账，抓"正文有、CSV 无"数字）+ do 模板 `global TAG` 强制 tag 化输出（CSV 禁止写 output/tables/ 根目录）。经 Claude Code 审查修复（参数解析、状态行恒真校验、归档 stamp 撞车、MAPPING 覆盖保护） |
 | **v0.2.4** | 2026-08-07 | 事件研究图定版：新增 §1B「TWFE 手动 twoway 版」模板（rcap CI + scatter、基期无点、竖线在 0 期、画全 -5..+6、xlabel 规范），§0 补硬性要求（y=0 实线、图内全中文、vision 验证标准）；陷阱表新增 2 条（竖线 xline 错位、set obs 漏期） |
 | **v0.2.3** | 2026-08-01 | 合并 stata-empirical 经验库：陷阱 26→41 条（新增 PSM-DID 时变匹配、HonestDiD 基期列、倒 V 型诊断、省级控制过度参数化等 14 条实战坑），新增 8 个诊断方案 references（HonestDiD/PSM/倒 V/跨组动态/纯控制组等）、master-do-template.do 模板、TeX 输出规范（4 位小数+t 值）、交流用语规范、快速诊断运行模式、IV F 读取经验。frontmatter 新增 version 字段 |
 | **v0.2.2** | 2026-07-30 | 图形部分完全对齐 codex-stata-for-economists：事件研究改用 csdid（废弃 coefplot），scheme 统一 s2color，网格线 gs14 vthin，补完整配色和字体规范 |
