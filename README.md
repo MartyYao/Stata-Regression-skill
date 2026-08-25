@@ -1,5 +1,7 @@
 # Stata Regression Skill
 
+> Version: v0.2.5
+
 > 面向实证经济学论文的 Stata 编码规范、出图标准、表格格式与计量质量检查清单。
 > Designed for AI coding assistants — Claude Code, Codex, Kimi Code, Cursor, and any agent that reads local context files.
 

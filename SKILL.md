@@ -1,7 +1,7 @@
 ---
 name: stata-regression
 description: Use when writing Stata do-files for empirical papers.
-version: 0.2.5
+version: v0.2.5
 ---
 
 # Stata Regression — 实证论文 Stata 工作流
